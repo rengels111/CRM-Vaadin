@@ -1,9 +1,11 @@
-package com.example.application.data;
+package com.example.application.data.entity;
 
+import com.example.application.data.AbstractEntity;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToMany;
 import jakarta.validation.constraints.NotBlank;
+
 import java.util.LinkedList;
 import java.util.List;
 

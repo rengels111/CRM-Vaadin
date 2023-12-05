@@ -1,33 +1,86 @@
 package com.example.application.views.list;
 
-import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Image;
-import com.vaadin.flow.component.html.Paragraph;
+import com.example.application.data.entity.Contact;
+import com.example.application.data.services.CrmService;
+import com.vaadin.flow.component.Component;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.grid.Grid;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
-import com.vaadin.flow.theme.lumo.LumoUtility.Margin;
 
-@PageTitle("list")
+@PageTitle("Contacts | Seed and Growth Ltd")
 @Route(value = "")
-public class ListView extends VerticalLayout {
+public class ListView extends VerticalLayout {  // Alle Kind-Komponenten vertikal anordnen
 
-    public ListView() {
-        setSpacing(false);
+    Grid<Contact> grid = new Grid<>(Contact.class);  // Neues Raster für Kontakte
+    TextField filterText = new TextField();  // Textfeld zum Filtern
+    ContactForm form;  // Wir integrieren das Formular.
+    private final CrmService crmService;
 
-        Image img = new Image("images/empty-plant.png", "placeholder plant");
-        img.setWidth("200px");
-        add(img);
+    public ListView(CrmService crmService) {  // Constructor-Injection für CrmService.
+        this.crmService = crmService;
 
-        H2 header = new H2("This place intentionally left empty");
-        header.addClassNames(Margin.Top.XLARGE, Margin.Bottom.MEDIUM);
-        add(header);
-        add(new Paragraph("It’s a place where you can grow your own UI 🤗"));
+        addClassName("list-view");  // Einen CSS-Namen vergeben, um später auf CSS zuzugreifen.
+        setSizeFull();  // Volle Browsergröße verwenden.
 
-        setSizeFull();
-        setJustifyContentMode(JustifyContentMode.CENTER);
-        setDefaultHorizontalComponentAlignment(Alignment.CENTER);
-        getStyle().set("text-align", "center");
+        configureGrid();  // Methode zur Konfiguration des Rasters.
+        configureForm();  // Methode zur Konfiguration des Formulars.
+
+        add(getToolbar(), getContent());  // Symbolleiste und Content einfügen.
+
+        updateList();  // Liste mit crmService.findAllContacts aktualisieren (wird per JPA Database abgerufen)
+
+    }
+
+    private void updateList() {
+        grid.setItems(crmService.findAllContacts(filterText.getValue()));
+    }
+
+    private Component getContent() {
+        HorizontalLayout content = new HorizontalLayout(grid, form);  // Raster + Formular einfügen.
+        content.setFlexGrow(2, grid);  // Raster soll die doppelte Größe des Formulars haben.
+        content.setFlexGrow(1, form);
+        content.addClassName("content");  // Name für CSS.
+        content.setSizeFull();  // Volle Browsergröße.
+
+        return content;
+    }
+
+    private void configureForm() {
+        // Da noch keine Datenbank mit companies, statuses verbunden ist, erstmal mit leeren Listen füllen:
+        form = new ContactForm(crmService.findAllCompanies(), crmService.findAllStatuses());  // mit service... gefüllt.
+        form.setWidth("25em");  // Breite festlegen.
+    }
+
+    private Component getToolbar() {  // Symbolleiste
+        filterText.setPlaceholder("Filter by name...");  // Platzhalter für Textfeld.
+        filterText.setClearButtonVisible(true);
+        filterText.setValueChangeMode(ValueChangeMode.LAZY);  // Es soll nicht in Echtzeit gefiltert werden, sondern
+        // eine gewisse Zeit auf weitere Eingabe gewartet werden.
+        filterText.addValueChangeListener(e -> updateList());  // Toolbar wird geupdated.
+
+        Button addContactButton = new Button("Add contact");  // Button um Kontakte hinzuzufügen.
+
+        HorizontalLayout toolbar = new HorizontalLayout(filterText, addContactButton);  // Komponenten horizontal.
+        toolbar.addClassName("toolbar");  // Name für CSS.
+
+        return toolbar;
+    }
+
+    private void configureGrid() {
+        grid.addClassName("contact-grid");  // Namen einfügen, für späteren CSS Eingriff.
+        grid.setSizeFull();  // Ganzen möglichen Browser-Bildschirm verwenden.
+        grid.setColumns("firstName", "lastName", "email");  // Spalten bestimmen.
+        // Da wir Objekte haben und nicht nur Strings übergeben wollen, erstellen wir den Zugriff auf die Objekte:
+        grid.addColumn(contact -> contact.getStatus().getName()).setHeader("Status");
+        grid.addColumn(contact -> contact.getCompany().getName()).setHeader("Company");
+        grid.getColumns().forEach(col -> col.setAutoWidth(true));  // Spaltengröße automatisch anpassen.
+
+
     }
 
 }
