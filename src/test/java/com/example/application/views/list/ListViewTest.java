@@ -24,10 +24,6 @@ public class ListViewTest {
     @Autowired
     private ListView listView;
 
-    public ListViewTest(ListView listView) {
-        this.listView = listView;
-    }
-
     @Test
     public void formShownWhenContactSelected() {
         Grid<Contact> grid = listView.grid;
@@ -37,7 +33,6 @@ public class ListViewTest {
 
         assertFalse(form.isVisible());
         grid.asSingleSelect().setValue(firstContact);
-
         assertTrue(form.isVisible());
         assertEquals(firstContact.getFirstName(), form.firstName.getValue());
     }
